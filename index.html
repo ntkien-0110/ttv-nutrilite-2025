@@ -282,7 +282,8 @@
     }
     const updateUIStatus = () => {
       const count = db.questions.length;
-      el('db-status').textContent = count > 0 ? `${count} câu hỏi` : 'Chưa có dữ liệu';
+      const s = el('db-status');
+      if (s) s.textContent = count > 0 ? `${count} câu hỏi` : 'Chưa có dữ liệu';
 
       // Update Quiz View
       if (count > 0) {
