@@ -402,7 +402,7 @@
           try {
             const data = await fetchJSON(url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now());
             if(Array.isArray(data)) {
-              const valid = data.filter(item => item.q && Array.isArray(item.opts) && typeof item.correct === 'number');
+              const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number' || (Array.isArray(item.corrects) && item.corrects.length>0)));
               db.questions = valid;
               db.corpus = '';
               saveDB();
@@ -422,7 +422,7 @@
       try {
         const data = await fetchJSON(url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now());
         if(Array.isArray(data)) {
-          const valid = data.filter(item => item.q && Array.isArray(item.opts) && typeof item.correct === 'number');
+          const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number' || (Array.isArray(item.corrects) && item.corrects.length>0)));
           if(valid.length > 0) {
             db.questions = valid;
             db.corpus = '';
@@ -458,9 +458,12 @@
       try {
         const data = await fetchJSON(url + '?demo60=1&ts=' + Date.now());
         if(!Array.isArray(data) || data.length === 0) { el('demo-progress-text').textContent = 'Không có dữ liệu'; return; }
-        const valid = data.filter(item => item.q && Array.isArray(item.opts) && typeof item.correct === 'number');
+        const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number' || (Array.isArray(item.corrects) && item.corrects.length>0)));
         const shuffled = [...valid].sort(()=>Math.random()-0.5);
-        const picked = shuffled.slice(0, 60).map(x => ({ q: x.q, opts: x.opts, correct: x.correct }));
+        const picked = shuffled.slice(0, 60).map(x => {
+          if (typeof x.correct === 'number') return { q: x.q, opts: x.opts, correct: x.correct };
+          return { q: x.q, opts: x.opts, corrects: Array.isArray(x.corrects) ? x.corrects : [] };
+        });
         db.questions = picked;
         db.corpus = '';
         saveDB();
@@ -700,10 +703,10 @@
       el('q-progress').textContent = `${quizState.index + 1}/${quizState.shuffled.length}`;
       el('q-score').textContent = quizState.score;
       el('q-text').textContent = q.q;
-      
+      const isMulti = Array.isArray(q.corrects) && q.corrects.length > 0;
       el('q-options').innerHTML = q.opts.map((opt, i) => `
         <label class="block p-4 rounded-xl border border-border bg-white hover:bg-slate-50 cursor-pointer transition-all group relative overflow-hidden">
-          <input type="radio" name="opt" value="${i}" class="peer hidden">
+          <input type="${isMulti?'checkbox':'radio'}" name="opt" value="${i}" class="peer hidden">
           <div class="absolute inset-0 border-2 border-transparent peer-checked:border-accent rounded-xl pointer-events-none"></div>
           <div class="flex items-start gap-3">
             <div class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-200 text-xs flex items-center justify-center group-hover:bg-slate-300 peer-checked:bg-accent peer-checked:text-white transition-colors">
@@ -713,52 +716,82 @@
           </div>
         </label>
       `).join('');
-      
+      el('btn-next-q').classList.remove('hidden');
       el('btn-next-q').classList.remove('hidden');
       el('btn-next-q').textContent = 'Kiểm tra';
       el('btn-next-q').onclick = checkAnswer;
     }
 
     const checkAnswer = () => {
-      const sel = document.querySelector('input[name="opt"]:checked');
-      if(!sel) return;
-      
-      const idx = parseInt(sel.value);
       const q = quizState.shuffled[quizState.index];
-      const isCorrect = (idx === q.correct);
-      quizState.history.push({ q: q.q, selected: idx, correct: q.correct });
-      
-      // Highlight
-      const inputs = document.querySelectorAll('input[name="opt"]');
-      inputs.forEach(inp => {
-        const val = parseInt(inp.value);
-        const parent = inp.closest('label');
-        if(val === q.correct) {
-          parent.classList.add('bg-green-50', 'border-green-500');
-          const badge = parent.querySelector('.w-6.h-6');
-          if(badge) badge.classList.add('bg-green-600', 'text-white');
-        } else if(val === idx && !isCorrect) {
-          parent.classList.add('bg-red-50', 'border-red-500');
-          const badge = parent.querySelector('.w-6.h-6');
-          if(badge) badge.classList.add('bg-red-600', 'text-white');
+      const isMulti = Array.isArray(q.corrects) && q.corrects.length > 0;
+      if (isMulti) {
+        const sels = [...document.querySelectorAll('input[name="opt"]:checked')].map(x=>parseInt(x.value)).sort((a,b)=>a-b);
+        if (sels.length === 0) return;
+        const corr = [...q.corrects].sort((a,b)=>a-b);
+        const okSet = corr.length === sels.length && corr.every((v,i)=>v===sels[i]);
+        quizState.history.push({ q: q.q, selected: sels, corrects: corr });
+        const inputs = document.querySelectorAll('input[name="opt"]');
+        inputs.forEach(inp => {
+          const val = parseInt(inp.value);
+          const parent = inp.closest('label');
+          if (corr.includes(val)) {
+            parent.classList.add('bg-green-50','border-green-500');
+            const badge = parent.querySelector('.w-6.h-6');
+            if(badge) badge.classList.add('bg-green-600','text-white');
+          } else if (sels.includes(val)) {
+            parent.classList.add('bg-red-50','border-red-500');
+            const badge = parent.querySelector('.w-6.h-6');
+            if(badge) badge.classList.add('bg-red-600','text-white');
+          }
+          inp.disabled = true;
+        });
+        if (okSet) {
+          quizState.score++;
+          el('q-score').textContent = quizState.score;
         }
-        inp.disabled = true;
-      });
-
-      if(isCorrect) {
-        quizState.score++;
-        el('q-score').textContent = quizState.score;
+        const fb = document.createElement('div');
+        fb.className = 'mt-4';
+        const letters = corr.map(i=>String.fromCharCode(65+i)).join(', ');
+        fb.innerHTML = `<div class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${okSet ? 'border-green-500 bg-green-50 text-green-700' : 'border-red-500 bg-red-50 text-red-700'}">
+          <span>Đáp án đúng: <strong>${letters}</strong></span>
+        </div>`;
+        el('q-options').appendChild(fb);
+      } else {
+        const sel = document.querySelector('input[name="opt"]:checked');
+        if(!sel) return;
+        const idx = parseInt(sel.value);
+        const isCorrect = (idx === q.correct);
+        quizState.history.push({ q: q.q, selected: idx, correct: q.correct });
+        const inputs = document.querySelectorAll('input[name="opt"]');
+        inputs.forEach(inp => {
+          const val = parseInt(inp.value);
+          const parent = inp.closest('label');
+          if(val === q.correct) {
+            parent.classList.add('bg-green-50', 'border-green-500');
+            const badge = parent.querySelector('.w-6.h-6');
+            if(badge) badge.classList.add('bg-green-600', 'text-white');
+          } else if(val === idx && !isCorrect) {
+            parent.classList.add('bg-red-50', 'border-red-500');
+            const badge = parent.querySelector('.w-6.h-6');
+            if(badge) badge.classList.add('bg-red-600', 'text-white');
+          }
+          inp.disabled = true;
+        });
+        if(isCorrect) {
+          quizState.score++;
+          el('q-score').textContent = quizState.score;
+        }
+        const fb = document.createElement('div');
+        fb.className = 'mt-4';
+        const ok = String.fromCharCode(65 + q.correct);
+        const txt = q.opts[q.correct];
+        fb.innerHTML = `<div class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${isCorrect ? 'border-green-500 bg-green-50 text-green-700' : 'border-red-500 bg-red-50 text-red-700'}">
+          <span>Đáp án đúng: <strong>${ok}</strong></span>
+          <span class="text-text">${txt}</span>
+        </div>`;
+        el('q-options').appendChild(fb);
       }
-      const fb = document.createElement('div');
-      fb.className = 'mt-4';
-      const ok = String.fromCharCode(65 + q.correct);
-      const txt = q.opts[q.correct];
-      fb.innerHTML = `<div class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${isCorrect ? 'border-green-500 bg-green-50 text-green-700' : 'border-red-500 bg-red-50 text-red-700'}">
-        <span>Đáp án đúng: <strong>${ok}</strong></span>
-        <span class="text-text">${txt}</span>
-      </div>`;
-      el('q-options').appendChild(fb);
-
       el('btn-next-q').textContent = 'Câu tiếp theo';
       el('btn-next-q').onclick = () => {
         quizState.index++;
