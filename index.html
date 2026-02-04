@@ -337,18 +337,24 @@
     };
     const fetchJSON = async (url) => {
       try {
-        if (location.protocol === 'file:') {
+        const preferJsonp = location.protocol === 'file:' || (location.hostname && location.hostname.endsWith('github.io'));
+        if (preferJsonp) {
+          console.log('fetchJSON prefer JSONP', url);
           return await jsonpFetch(url);
         }
+        console.log('fetchJSON try fetch', url);
         const res = await fetch(url, { headers: { 'Accept': 'application/json, text/javascript, */*' } });
         if(!res.ok) throw new Error('http');
         const ct = (res.headers.get('content-type')||'').toLowerCase();
         if (ct.includes('application/json') || ct.includes('text/javascript')) {
-          return await res.json();
+          const j = await res.json();
+          console.log('fetchJSON fetch ok length', Array.isArray(j) ? j.length : (j && j.data ? j.data.length : 0));
+          return j;
         }
         const txt = await res.text();
-        try { return JSON.parse(txt); } catch(_) { throw new Error('parse'); }
+        try { const j2 = JSON.parse(txt); console.log('fetchJSON text->json ok'); return j2; } catch(_) { throw new Error('parse'); }
       } catch(_) {
+        console.log('fetchJSON fallback JSONP', url);
         return await jsonpFetch(url);
       }
     };
@@ -391,6 +397,7 @@
         } catch(_) { counts[n] = 0; }
         done++;
       }));
+      console.log('chapter counts', counts);
       grid.innerHTML = names.map(n => {
         const count = counts[n] || 0;
         const isDone = practiced.has(n);
@@ -409,16 +416,21 @@
           const name = btn.getAttribute('data-name');
           config.chapter = name; saveConfig();
           el('gsheet-status').textContent = `Đang tải câu hỏi: ${name}...`;
+          console.log('click chapter', name);
           try {
-            const data = await fetchJSON(url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now());
+            const u = url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now();
+            console.log('load url', u);
+            const data = await fetchJSON(u);
+            console.log('raw length', Array.isArray(data)?data.length:0);
             if(Array.isArray(data)) {
               const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number' || (Array.isArray(item.corrects) && item.corrects.length>0)));
+              console.log('valid length', valid.length);
               db.questions = valid;
               db.corpus = '';
               saveDB();
               setTab('mcq');
             }
-          } catch(e) { el('gsheet-status').textContent = 'Lỗi khi tải câu hỏi'; }
+          } catch(e) { console.log('load chapter error', e); el('gsheet-status').textContent = 'Lỗi khi tải câu hỏi'; }
         });
       });
     };
@@ -430,10 +442,14 @@
       config.gsheetUrl = url; config.chapter = name; saveConfig();
       el('gsheet-status').textContent = `Đang tải câu hỏi: ${name}...`;
       try {
-        const data = await fetchJSON(url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now());
+        const u = url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now();
+        console.log('load dropdown url', u);
+        const data = await fetchJSON(u);
+        console.log('dropdown raw length', Array.isArray(data)?data.length:0);
         if(Array.isArray(data)) {
           const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number' || (Array.isArray(item.corrects) && item.corrects.length>0)));
           if(valid.length > 0) {
+            console.log('dropdown valid length', valid.length);
             db.questions = valid;
             db.corpus = '';
             saveDB();
@@ -456,6 +472,7 @@
           el('gsheet-status').textContent = 'Phản hồi không hợp lệ';
         }
       } catch(e) {
+        console.log('dropdown load error', e);
         el('gsheet-status').textContent = 'Lỗi khi tải câu hỏi chủ đề';
       }
     }
