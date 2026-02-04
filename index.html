@@ -335,12 +335,21 @@
       });
     };
     const fetchJSON = async (url) => {
-      if (location.protocol === 'file:') {
+      try {
+        if (location.protocol === 'file:') {
+          return await jsonpFetch(url);
+        }
+        const res = await fetch(url, { headers: { 'Accept': 'application/json, text/javascript, */*' } });
+        if(!res.ok) throw new Error('http');
+        const ct = (res.headers.get('content-type')||'').toLowerCase();
+        if (ct.includes('application/json') || ct.includes('text/javascript')) {
+          return await res.json();
+        }
+        const txt = await res.text();
+        try { return JSON.parse(txt); } catch(_) { throw new Error('parse'); }
+      } catch(_) {
         return await jsonpFetch(url);
       }
-      const res = await fetch(url);
-      if(!res.ok) throw new Error('fail');
-      return await res.json();
     };
 
     const loadChapters = async () => {
