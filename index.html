@@ -121,6 +121,9 @@
                <span class="text-sm font-medium text-muted">Thời gian</span>
                <span id="q-timer" class="text-xl font-bold text-text ml-2">45:00</span>
              </div>
+             <button id="btn-exit-quiz" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-text text-sm">
+               Thoát
+             </button>
              <button onclick="resetQuiz()" class="p-2 hover:bg-slate-100 rounded-lg text-muted transition-colors" title="Làm lại từ đầu">
                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
              </button>
@@ -415,22 +418,10 @@
         btn.addEventListener('click', async () => {
           const name = btn.getAttribute('data-name');
           config.chapter = name; saveConfig();
-          el('gsheet-status').textContent = `Đang tải câu hỏi: ${name}...`;
-          console.log('click chapter', name);
-          try {
-            const u = url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now();
-            console.log('load url', u);
-            const data = await fetchJSON(u);
-            console.log('raw length', Array.isArray(data)?data.length:0);
-            if(Array.isArray(data)) {
-              const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number' || (Array.isArray(item.corrects) && item.corrects.length>0)));
-              console.log('valid length', valid.length);
-              db.questions = valid;
-              db.corpus = '';
-              saveDB();
-              setTab('mcq');
-            }
-          } catch(e) { console.log('load chapter error', e); el('gsheet-status').textContent = 'Lỗi khi tải câu hỏi'; }
+          el('chapter-select').value = name;
+          el('chapter-picker').classList.remove('hidden');
+          grid.classList.add('hidden');
+          el('gsheet-status').textContent = `Chủ đề: ${name}. Bấm "Bắt đầu" để nạp câu hỏi và làm bài.`;
         });
       });
     };
@@ -453,8 +444,13 @@
             db.questions = valid;
             db.corpus = '';
             saveDB();
-            el('gsheet-status').textContent = `Đã nạp ${valid.length} câu hỏi cho ${name}`;
+            el('gsheet-status').textContent = `Đã nạp ${valid.length} câu hỏi cho ${name}. Bấm "Bắt đầu bài" để làm theo thứ tự.`;
+            el('chapter-picker').classList.add('hidden');
+            el('quiz-empty').classList.add('hidden');
+            el('quiz-container').classList.remove('hidden');
+            el('quiz-container').classList.add('flex');
             setTab('mcq');
+            initQuiz(false);
           } else {
             // Fallback debug to show counts
             try {
@@ -949,10 +945,25 @@
     });
     el('btn-demo-start').addEventListener('click', () => {
       el('demo-progress').classList.add('hidden');
+      el('quiz-empty').classList.add('hidden');
+      el('quiz-container').classList.remove('hidden');
+      el('quiz-container').classList.add('flex');
       startDemoTimer(45);
-      initQuiz();
+      initQuiz(true);
     });
     el('btn-save-profile').addEventListener('click', saveProfile);
+    el('btn-exit-quiz').addEventListener('click', () => {
+      // Exit to chapters grid for chapter mode, else home
+      if (uiStep === 'chapters') {
+        el('quiz-container').classList.add('hidden');
+        el('quiz-container').classList.remove('flex');
+        el('quiz-empty').classList.remove('hidden');
+        el('chapter-grid').classList.remove('hidden');
+        el('gsheet-status').textContent = '';
+      } else {
+        showHome();
+      }
+    });
     // Init
     loadDB();
     setTab('mcq');
