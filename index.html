@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ôn thi Tư vấn viên sức khỏe Nutrilite 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            bg: '#f8fafc',
+            panel: '#ffffff',
+            accent: '#2563eb',
+            success: '#16a34a',
+            text: '#0f172a',
+            muted: '#64748b',
+            border: '#e2e8f0'
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'</script>
+  <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    body { background-color: #f8fafc; color: #0f172a; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white border-r border-border flex flex-col">
+    <div class="p-6 border-b border-border">
+      <h1 class="font-bold text-xl text-text tracking-tight">Nutrilite 2026</h1>
+      <p class="text-xs text-muted mt-1">Hệ thống ôn thi tự động</p>
+    </div>
+    <nav class="flex-1 p-4 space-y-2">
+      <button onclick="setTab('mcq')" id="nav-mcq" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted hover:bg-slate-800 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Thi Trắc Nghiệm
+      </button>
+      <button onclick="setTab('oral')" id="nav-oral" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted hover:bg-slate-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+        Luyện Vấn Đáp
+      </button>
+    </nav>
+    <div class="p-4 border-t border-border">
+      <div class="bg-white border border-border rounded-lg p-3">
+        <div class="text-xs text-muted mb-1">Trạng thái dữ liệu</div>
+        <div id="db-status" class="text-sm font-semibold text-text">Chưa có dữ liệu</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-auto bg-bg p-8">
+    
+    <!-- MCQ Quiz Section -->
+    <div id="view-mcq" class="hidden max-w-4xl mx-auto h-full flex flex-col">
+      <div class="bg-panel border border-border rounded-xl p-6 mb-6 shadow-sm">
+        <div id="profile-row" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div class="md:col-span-2">
+            <label for="profile-phone" class="block text-xs font-medium text-muted mb-1">Thông tin người luyện tập</label>
+            <div class="grid grid-cols-1 md:grid-cols-1 gap-3">
+              <input id="profile-phone" type="tel" placeholder="Số điện thoại" class="block w-full text-sm bg-white rounded-lg border border-border text-text px-3 py-2">
+            </div>
+          </div>
+          <button id="btn-save-profile" class="py-2 px-4 bg-slate-200 hover:bg-slate-300 text-text rounded-lg text-sm">Lưu thông tin</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mt-6">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-muted mb-1">Lựa chọn chế độ</label>
+            <div class="text-xs text-muted">Chọn một chế độ thi phù hợp</div>
+          </div>
+          <div class="flex gap-2">
+            <button id="btn-mode-by-chapter" class="py-2 px-4 bg-accent hover:bg-blue-600 text-white rounded-lg text-sm">Ôn tập theo từng chủ đề</button>
+            <button id="btn-mode-demo60" class="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm">THI DEMO (60 câu)</button>
+          </div>
+        </div>
+        <div id="chapter-picker" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mt-6 hidden">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-muted mb-1">Chọn chương</label>
+            <select id="chapter-select" class="block w-full text-sm bg-white rounded-lg border border-border text-text px-3 py-2">
+              <option value="">-- Chưa có dữ liệu --</option>
+            </select>
+          </div>
+          <button id="btn-start-chapter" class="py-2 px-4 bg-accent hover:bg-blue-600 text-white rounded-lg text-sm">Bắt đầu</button>
+        </div>
+        <div id="gsheet-status" class="text-xs text-muted mt-4 min-h-[1.25rem]"></div>
+      </div>
+      <div id="quiz-empty" class="text-center py-20">
+        <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Chưa có câu hỏi nào</h3>
+        <p class="text-muted mb-6">Chọn chế độ, tải chương hoặc dùng DEMO 60 câu.</p>
+      </div>
+
+      <div id="quiz-container" class="hidden flex-col h-full">
+        <!-- Progress Header -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <span class="text-sm font-medium text-muted">Câu hỏi</span>
+            <span id="q-progress" class="text-xl font-bold text-text ml-2">1/10</span>
+          </div>
+          <div class="flex items-center gap-4">
+             <div class="text-right">
+               <span class="text-sm font-medium text-muted">Điểm số</span>
+               <span id="q-score" class="text-xl font-bold text-success ml-2">0</span>
+             </div>
+             <button onclick="resetQuiz()" class="p-2 hover:bg-slate-100 rounded-lg text-muted transition-colors" title="Làm lại từ đầu">
+               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+             </button>
+          </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full">
+          <div class="bg-panel border border-border rounded-2xl p-8 shadow-sm">
+            <div id="q-text" class="text-lg md:text-xl font-medium text-text mb-8 leading-relaxed"></div>
+            
+            <div id="q-options" class="space-y-3">
+              <!-- Options injected here -->
+            </div>
+          </div>
+          
+          <div class="mt-8 flex justify-center">
+            <button id="btn-next-q" class="px-8 py-3 bg-accent hover:bg-blue-600 text-white font-semibold rounded-xl shadow-sm transition-all transform hover:scale-105 active:scale-95 hidden">
+              Câu tiếp theo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Oral Section -->
+    <div id="view-oral" class="hidden max-w-4xl mx-auto h-full flex flex-col">
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-2xl font-bold text-text">Luyện tập Vấn đáp</h2>
+        <div class="flex gap-2">
+          <button id="btn-oral-next" class="px-4 py-2 bg-accent hover:bg-blue-600 text-white rounded-lg font-medium transition-colors">
+            Câu ngẫu nhiên
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 flex items-center justify-center">
+        <div id="oral-card" class="bg-panel border border-border rounded-2xl p-10 shadow-sm w-full text-center min-h-[300px] flex flex-col justify-center items-center transition-all">
+          <div id="oral-placeholder" class="text-muted">
+            <svg class="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            <p>Bấm "Câu ngẫu nhiên" để bắt đầu luyện tập</p>
+          </div>
+          <div id="oral-content" class="hidden">
+            <h3 class="text-xl md:text-2xl font-semibold text-text leading-relaxed mb-6" id="oral-text"></h3>
+            <div class="inline-block bg-slate-100 rounded-lg px-4 py-2 text-sm text-muted border border-border">
+              Gợi ý trả lời: Định nghĩa ➜ Lợi ích ➜ Bằng chứng ➜ Ví dụ
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // --- State & Storage ---
+    const DB_KEY = 'nutrilite_db_v1';
+    const CONFIG_KEY = 'nutrilite_config_v1';
+    const PROFILE_KEY = 'nutrilite_profile_v1';
+    const SCORES_KEY = 'nutrilite_scores_v1';
+    const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbwu92RcTVckfgo6v78MoAH1H_zTtl3XxtsdQOxIzv0k2bz0iSyaM6A9ckYxz3yvpxA73A/exec';
+    let db = {
+      questions: [],
+      corpus: ''
+    };
+    let config = {
+      gsheetUrl: '',
+      chapter: ''
+    };
+    let profile = { phone: '' };
+    let quizState = {
+      index: 0,
+      score: 0,
+      shuffled: []
+    };
+
+    // --- Utils ---
+    const el = id => document.getElementById(id);
+    const normalize = t => t.replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/\r/g,'');
+    const loadDB = async () => {
+      const rawCfg = localStorage.getItem(CONFIG_KEY);
+      if(rawCfg) {
+        try { config = JSON.parse(rawCfg); } catch(e){}
+      } else {
+        config.gsheetUrl = DEFAULT_GSHEET_URL;
+        saveConfig();
+      }
+      const rawProf = localStorage.getItem(PROFILE_KEY);
+      if(rawProf) { try { profile = JSON.parse(rawProf); } catch(e){} }
+      el('profile-phone').value = profile.phone || '';
+      applyProfileVisibility();
+      const raw = localStorage.getItem(DB_KEY);
+      if (raw) {
+        try { db = JSON.parse(raw); } catch(e) { console.error('DB load fail', e); }
+        updateUIStatus();
+      } else {
+        // Try to load default data from data.json
+        try {
+          const res = await fetch('data.json');
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.questions) {
+              db = data;
+              saveDB();
+              console.log('Loaded default data from data.json');
+            }
+          }
+        } catch (e) {
+          console.log('No default data found');
+        }
+        updateUIStatus();
+      }
+    }
+    const saveDB = () => {
+      localStorage.setItem(DB_KEY, JSON.stringify(db));
+      updateUIStatus();
+    }
+    const saveConfig = () => {
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    }
+    const saveProfile = () => {
+      profile.phone = el('profile-phone').value.trim();
+      if(!profile.phone) { el('gsheet-status').textContent = 'Vui lòng nhập số điện thoại'; return; }
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+      el('gsheet-status').textContent = 'Đã lưu thông tin người luyện tập';
+      applyProfileVisibility();
+    }
+    const saveScoreRecord = (mode) => {
+      const recsRaw = localStorage.getItem(SCORES_KEY);
+      let recs = [];
+      if(recsRaw) { try { recs = JSON.parse(recsRaw); } catch(e){} }
+      recs.unshift({
+        name: profile.name || '',
+        note: profile.note || '',
+        score: quizState.score,
+        total: quizState.shuffled.length,
+        mode,
+        chapter: config.chapter || '',
+        at: new Date().toISOString()
+      });
+      recs = recs.slice(0, 50);
+      localStorage.setItem(SCORES_KEY, JSON.stringify(recs));
+    }
+    const updateUIStatus = () => {
+      const count = db.questions.length;
+      el('db-status').textContent = count > 0 ? `${count} câu hỏi` : 'Chưa có dữ liệu';
+
+      // Update Quiz View
+      if (count > 0) {
+        el('quiz-empty').classList.add('hidden');
+        el('quiz-container').classList.remove('hidden');
+        el('quiz-container').classList.add('flex');
+        if (quizState.shuffled.length === 0) initQuiz();
+      } else {
+        el('quiz-empty').classList.remove('hidden');
+        el('quiz-container').classList.add('hidden');
+        el('quiz-container').classList.remove('flex');
+      }
+    }
+    const applyProfileVisibility = () => {
+      const has = !!(profile.phone && profile.phone.trim());
+      const row = el('profile-row');
+      const btn = el('btn-save-profile');
+      if(row) row.classList.toggle('hidden', has);
+      if(btn) btn.classList.toggle('hidden', has);
+    }
+
+    const jsonpFetch = (url) => {
+      return new Promise((resolve, reject) => {
+        const cb = '__jsonp_cb_' + Math.random().toString(36).slice(2);
+        const sep = url.includes('?') ? '&' : '?';
+        const src = url + sep + 'callback=' + cb;
+        const script = document.createElement('script');
+        let done = false;
+        window[cb] = (data) => {
+          if(done) return;
+          done = true;
+          resolve(data);
+          delete window[cb];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        };
+        script.onerror = () => {
+          if(done) return;
+          done = true;
+          delete window[cb];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          reject(new Error('JSONP request failed (có thể bị CORB)'));
+        };
+        script.src = src;
+        document.body.appendChild(script);
+      });
+    };
+    const fetchJSON = async (url) => {
+      if (location.protocol === 'file:') {
+        return await jsonpFetch(url);
+      }
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('fail');
+      return await res.json();
+    };
+
+    const loadChapters = async () => {
+      const url = (config.gsheetUrl || DEFAULT_GSHEET_URL).trim();
+      if(!url) { el('gsheet-status').textContent = 'Chưa cấu hình API'; return; }
+      config.gsheetUrl = url; saveConfig();
+      el('gsheet-status').textContent = 'Đang tải danh sách chủ đề...';
+      try {
+        const arr = await fetchJSON(url + '?list=1&ts=' + Date.now());
+        if(Array.isArray(arr) && arr.length > 0) {
+          const sel = el('chapter-select');
+          sel.innerHTML = arr.map(n => `<option value="${n}">${n}</option>`).join('');
+          el('gsheet-status').textContent = `Đã tải ${arr.length} chủ đề`;
+        } else {
+          el('gsheet-status').textContent = 'Không tìm thấy chủ đề nào';
+        }
+      } catch(e) {
+        el('gsheet-status').textContent = 'Lỗi khi tải danh sách chủ đề';
+      }
+    }
+    const loadChapterQuestions = async () => {
+      const url = (config.gsheetUrl || DEFAULT_GSHEET_URL).trim();
+      const name = el('chapter-select').value;
+      if(!name) { el('gsheet-status').textContent = 'Chọn chủ đề'; return; }
+      if(!url) { el('gsheet-status').textContent = 'Chưa cấu hình API'; return; }
+      config.gsheetUrl = url; config.chapter = name; saveConfig();
+      el('gsheet-status').textContent = `Đang tải câu hỏi: ${name}...`;
+      try {
+        const data = await fetchJSON(url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now());
+        if(Array.isArray(data)) {
+          const valid = data.filter(item => item.q && Array.isArray(item.opts) && typeof item.correct === 'number');
+          if(valid.length > 0) {
+            db.questions = valid;
+            db.corpus = '';
+            saveDB();
+            el('gsheet-status').textContent = `Đã nạp ${valid.length} câu hỏi cho ${name}`;
+            setTab('mcq');
+          } else {
+            // Fallback debug to show counts
+            try {
+              const dj = await fetchJSON(url + '?sheet=' + encodeURIComponent(name) + '&debug=1&ts=' + Date.now());
+              if (dj && dj.ok) {
+                el('gsheet-status').textContent = `Không có câu hợp lệ. Hợp lệ: ${dj.count}, Bỏ qua: ${dj.skipped}`;
+              } else {
+                el('gsheet-status').textContent = 'Dữ liệu không đúng định dạng';
+              }
+            } catch (e2) {
+              el('gsheet-status').textContent = 'Dữ liệu không đúng định dạng';
+            }
+          }
+        } else {
+          el('gsheet-status').textContent = 'Phản hồi không hợp lệ';
+        }
+      } catch(e) {
+        el('gsheet-status').textContent = 'Lỗi khi tải câu hỏi chủ đề';
+      }
+    }
+    const loadAll60 = async () => {
+      const url = (config.gsheetUrl || DEFAULT_GSHEET_URL).trim();
+      if(!url) { el('gsheet-status').textContent = 'Chưa cấu hình API'; return; }
+      el('gsheet-status').textContent = 'Đang tải câu hỏi tất cả chương...';
+      try {
+        const arr = await fetchJSON(url + '?list=1&ts=' + Date.now());
+        let all = [];
+        for(const name of arr) {
+          let data;
+          try {
+            data = await fetchJSON(url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now());
+          } catch(_) {
+            continue;
+          }
+          if(Array.isArray(data)) {
+            const valid = data.filter(item => item.q && Array.isArray(item.opts) && typeof item.correct === 'number');
+            all = all.concat(valid.map(q => ({...q, _ch: name})));
+          }
+        }
+        if(all.length === 0) { el('gsheet-status').textContent = 'Không có dữ liệu'; return; }
+        const shuffled = [...all].sort(()=>Math.random()-0.5);
+        const picked = shuffled.slice(0, 60).map(x => ({ q: x.q, opts: x.opts, correct: x.correct }));
+        db.questions = picked;
+        db.corpus = '';
+        saveDB();
+        config.chapter = 'DEMO 60';
+        saveConfig();
+        el('gsheet-status').textContent = `Đã nạp 60 câu tổng hợp từ ${arr.length} chủ đề`;
+        setTab('mcq');
+      } catch(e) {
+        el('gsheet-status').textContent = 'Lỗi khi tải 60 câu tổng hợp';
+      }
+    }
+
+    // --- Navigation ---
+    const setTab = (id) => {
+      ['mcq', 'oral'].forEach(t => {
+        el(`view-${t}`).classList.add('hidden');
+        const btn = el(`nav-${t}`);
+        if (t === id) {
+          btn.classList.remove('text-muted', 'hover:bg-slate-800');
+          btn.classList.add('bg-accent/10', 'text-accent');
+          el(`view-${t}`).classList.remove('hidden');
+        } else {
+          btn.classList.add('text-muted', 'hover:bg-slate-800');
+          btn.classList.remove('bg-accent/10', 'text-accent');
+        }
+      });
+    }
+
+    // --- Parsers ---
+    // (Same logic as before, refined)
+    const getLines = t => t.split(/\r?\n/).map(s => s.trim()).filter(s => s.length>0);
+    const isOption = s => /^[A-Da-d][\.\)]\s+/.test(s) || /^[A-Da-d]\s+/.test(s) || /^[-•]\s+/.test(s);
+    const isQuestionStart = s => /^Câu\s*\d+[:\.]/i.test(s) || /^\d+\s*[:\.\)]\s+/.test(s) || /[?]$/.test(s);
+    const hasCorrectMark = s => /\(Đúng\)/i.test(s) || /\[Đúng\]/i.test(s) || /\*\s*$/.test(s);
+    const stripCorrectMark = s => s.replace(/\s*\(Đúng\)\s*/ig,'').replace(/\s*\[Đúng\]\s*/ig,'').replace(/\s*\*\s*$/,'');
+    const canon = s => normalize(s).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,'').replace(/\s+/g,' ').trim();
+    const approxContains = (a,b) => {
+      const ca = canon(a), cb = canon(b);
+      if(!ca||!cb) return false;
+      if(ca.includes(cb)||cb.includes(ca)) return true;
+      const ta=ca.split(' '), tb=cb.split(' ');
+      const setA=new Set(ta);
+      let inter=0; for(const t of tb) if(setA.has(t)) inter++;
+      return (inter/Math.max(ta.length,tb.length)) >= 0.8;
+    };
+    const isAllOfAbove = s => /(tất cả.*(đúng|đều đúng)|all of the above)/i.test(s);
+
+    const parseQuestions = (t, styled=[]) => {
+      const lines = getLines(normalize(t));
+      const qs = [];
+      let i = 0;
+      while(i < lines.length) {
+        if(isQuestionStart(lines[i])) {
+          const qText = lines[i].replace(/^Câu\s*\d+[:\.]\s*/i,'').replace(/^\d+[:\.]\s*/,'');
+          const opts = [];
+          let correctIndex = -1;
+          let j = i + 1;
+          while(j < lines.length && (isOption(lines[j]) || /^[A-D]\s*$/i.test(lines[j]))) {
+            let raw = lines[j].replace(/^[A-D][\.\)]\s+/, '').replace(/^[-•]\s+/, '').replace(/^[a-d][\.\)]\s+/,'');
+            if(hasCorrectMark(raw)) {
+              correctIndex = opts.length;
+              raw = stripCorrectMark(raw);
+            }
+            opts.push(raw);
+            j++;
+            if(opts.length === 4) break;
+          }
+          if(correctIndex < 0 && opts.length > 0 && styled.length > 0) {
+            for(let k=0; k<opts.length; k++) {
+              const opt = opts[k];
+              const found = styled.find(sl => sl.text && approxContains(sl.text, opt));
+              if(found && found.bold) { correctIndex = k; break; }
+            }
+          }
+          if(correctIndex < 0) {
+            const idxAll = opts.findIndex(o => isAllOfAbove(o));
+            if(idxAll >= 0) correctIndex = idxAll;
+          }
+          if(opts.length >= 2) {
+            qs.push({ q: qText.endsWith('?') ? qText : qText + '?', opts, correct: correctIndex });
+            i = j;
+            continue;
+          }
+        }
+        i++;
+      }
+      return qs;
+    }
+
+    // --- File Readers ---
+    const buildStyledFromHtml = (html) => {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const blocks = [];
+      doc.querySelectorAll('p, li, h1, h2, h3, h4').forEach(e => {
+        const text = e.textContent || '';
+        const bold = e.querySelector('b, strong') !== null;
+        if(text.trim().length>0) blocks.push({ text: normalize(text), bold });
+      });
+      return blocks;
+    }
+    const buildStyledFromPdfItems = async (page) => {
+      const content = await page.getTextContent();
+      const lines = [];
+      const buckets = {};
+      content.items.forEach(it => {
+        const y = Math.round(it.transform[5]);
+        const key = String(y);
+        if(!buckets[key]) buckets[key] = [];
+        buckets[key].push({str:it.str, x:it.transform[4], fontName:it.fontName});
+      });
+      Object.keys(buckets).sort((a,b)=>parseInt(a)-parseInt(b)).forEach(y => {
+        const row = buckets[y].sort((a,b)=>a.x-b.x);
+        let text = '';
+        for(let i=0; i<row.length; i++) {
+          text += row[i].str;
+          if(row[i+1] && (row[i+1].x - row[i].x > 2.5)) text += ' ';
+        }
+        text = text.trim();
+        const bold = row.some(i => {
+          const f = (i.fontName||'').toLowerCase();
+          return f.includes('bold')||f.includes('black')||f.includes('heavy');
+        });
+        if(text) lines.push({ text: normalize(text), bold });
+      });
+      return lines;
+    }
+
+    const readPdf = async (file) => {
+      if(!file) return { text: '', styled: [] };
+      const url = URL.createObjectURL(file);
+      const pdf = await pdfjsLib.getDocument(url).promise;
+      let outLines = [];
+      const styled = [];
+      for(let p=1; p<=pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const sl = await buildStyledFromPdfItems(page);
+        styled.push(...sl);
+        outLines.push(...sl.map(s=>s.text));
+      }
+      URL.revokeObjectURL(url);
+      return { text: outLines.join('\n'), styled };
+    }
+    const readDocx = async (file) => {
+      if(!file) return { text: '', styled: [] };
+      const ab = await file.arrayBuffer();
+      const html = await mammoth.convertToHtml({arrayBuffer: ab});
+      const styled = buildStyledFromHtml(html.value||'');
+      return { text: styled.map(s=>s.text).join('\n'), styled };
+    }
+
+    // --- Quiz Logic ---
+    const initQuiz = () => {
+      quizState.shuffled = [...db.questions].sort(() => 0.5 - Math.random());
+      quizState.index = 0;
+      quizState.score = 0;
+      renderQuizCard();
+    }
+    const resetQuiz = () => {
+      if(confirm('Bạn có chắc muốn làm lại từ đầu?')) initQuiz();
+    }
+    const renderQuizCard = () => {
+      if(quizState.index >= quizState.shuffled.length) {
+        // Finish
+        el('q-text').textContent = 'Chúc mừng! Bạn đã hoàn thành bài thi.';
+        el('q-options').innerHTML = `
+          <div class="text-center py-6">
+            <div class="text-4xl font-bold text-success mb-2">${quizState.score} / ${quizState.shuffled.length}</div>
+            <div class="text-muted">Điểm số cuối cùng</div>
+            <div class="flex justify-center gap-3 mt-6">
+              <button onclick="initQuiz()" class="px-6 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-text">Làm lại bài thi</button>
+              <button id="btn-save-score" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white">Lưu điểm</button>
+            </div>
+          </div>
+        `;
+        el('btn-next-q').classList.add('hidden');
+        const btn = document.getElementById('btn-save-score');
+        if(btn) btn.onclick = async () => {
+          saveScoreRecord(config.chapter || 'Chương');
+          await recordScoreToGSheet(config.chapter || 'Chương');
+        };
+        return;
+      }
+      
+      const q = quizState.shuffled[quizState.index];
+      el('q-progress').textContent = `${quizState.index + 1}/${quizState.shuffled.length}`;
+      el('q-score').textContent = quizState.score;
+      el('q-text').textContent = q.q;
+      
+      el('q-options').innerHTML = q.opts.map((opt, i) => `
+        <label class="block p-4 rounded-xl border border-border bg-white hover:bg-slate-50 cursor-pointer transition-all group relative overflow-hidden">
+          <input type="radio" name="opt" value="${i}" class="peer hidden">
+          <div class="absolute inset-0 border-2 border-transparent peer-checked:border-accent rounded-xl pointer-events-none"></div>
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-slate-200 text-xs flex items-center justify-center group-hover:bg-slate-300 peer-checked:bg-accent peer-checked:text-white transition-colors">
+              ${String.fromCharCode(65+i)}
+            </div>
+            <span class="text-text">${opt}</span>
+          </div>
+        </label>
+      `).join('');
+      
+      el('btn-next-q').classList.remove('hidden');
+      el('btn-next-q').textContent = 'Kiểm tra';
+      el('btn-next-q').onclick = checkAnswer;
+    }
+
+    const checkAnswer = () => {
+      const sel = document.querySelector('input[name="opt"]:checked');
+      if(!sel) return;
+      
+      const idx = parseInt(sel.value);
+      const q = quizState.shuffled[quizState.index];
+      const isCorrect = (idx === q.correct);
+      
+      // Highlight
+      const inputs = document.querySelectorAll('input[name="opt"]');
+      inputs.forEach(inp => {
+        const val = parseInt(inp.value);
+        const parent = inp.closest('label');
+        if(val === q.correct) {
+          parent.classList.add('bg-green-50', 'border-green-500');
+          const badge = parent.querySelector('.w-6.h-6');
+          if(badge) badge.classList.add('bg-green-600', 'text-white');
+        } else if(val === idx && !isCorrect) {
+          parent.classList.add('bg-red-50', 'border-red-500');
+          const badge = parent.querySelector('.w-6.h-6');
+          if(badge) badge.classList.add('bg-red-600', 'text-white');
+        }
+        inp.disabled = true;
+      });
+
+      if(isCorrect) {
+        quizState.score++;
+        el('q-score').textContent = quizState.score;
+      }
+
+      el('btn-next-q').textContent = 'Câu tiếp theo';
+      el('btn-next-q').onclick = () => {
+        quizState.index++;
+        renderQuizCard();
+      };
+    }
+
+    // --- Oral Logic ---
+    el('btn-oral-next').addEventListener('click', () => {
+      if(!db.orals || db.orals.length === 0) {
+        loadOrals();
+        return;
+      }
+      const item = db.orals[Math.floor(Math.random() * db.orals.length)];
+
+      el('oral-placeholder').classList.add('hidden');
+      el('oral-content').classList.remove('hidden');
+      el('oral-text').textContent = item.q;
+    });
+
+    // --- Event Listeners ---
+    el('btn-mode-by-chapter').addEventListener('click', () => {
+      document.getElementById('chapter-picker').classList.remove('hidden');
+      loadChapters();
+    });
+    el('btn-start-chapter').addEventListener('click', loadChapterQuestions);
+    el('btn-mode-demo60').addEventListener('click', loadAll60);
+    el('btn-save-profile').addEventListener('click', saveProfile);
+    // Init
+    loadDB();
+    setTab('mcq');
+    // Tự động tải danh sách chủ đề khi vào trang
+    try { loadChapters(); } catch(e) {}
+
+    const recordScoreToGSheet = async (mode) => {
+      const url = (config.gsheetUrl || DEFAULT_GSHEET_URL).trim();
+      if(!url) { el('gsheet-status').textContent = 'Chưa cấu hình API'; return; }
+      const payload = {
+        action: 'record',
+        phone: profile.phone || '',
+        name: '',
+        note: '',
+        mode,
+        chapter: config.chapter || '',
+        total: quizState.score,
+        totalQuestions: quizState.shuffled.length,
+        at: new Date().toISOString()
+      };
+      try {
+        const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        if(!res.ok) throw new Error('fail');
+        const data = await res.json();
+        if(data && data.ok) el('gsheet-status').textContent = 'Đã ghi điểm lên Google Sheet';
+        else el('gsheet-status').textContent = 'Không thể ghi điểm';
+      } catch(e) {
+        el('gsheet-status').textContent = 'Lỗi khi ghi điểm';
+      }
+    };
+    const loadOrals = async () => {
+      const url = (config.gsheetUrl || DEFAULT_GSHEET_URL).trim();
+      if(!url) { el('gsheet-status').textContent = 'Chưa cấu hình API'; return; }
+      try {
+        const items = await fetchJSON(url + '?oral=1&ts=' + Date.now());
+        if(Array.isArray(items) && items.length > 0) {
+          db.orals = items;
+          el('gsheet-status').textContent = `Đã nạp ${items.length} câu vấn đáp`;
+        } else {
+          el('gsheet-status').textContent = 'Không có câu vấn đáp';
+        }
+      } catch(e) {
+        el('gsheet-status').textContent = 'Lỗi khi tải câu vấn đáp';
+      }
+    };
+  </script>
+</body>
+</html>
