@@ -35,34 +35,16 @@
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="h-screen flex overflow-hidden">
+<body class="min-h-screen flex flex-col overflow-hidden">
 
   <!-- Sidebar -->
-  <aside class="w-64 bg-white border-r border-border flex flex-col">
-    <div class="p-6 border-b border-border">
-      <h1 class="font-bold text-xl text-text tracking-tight">Nutrilite 2026</h1>
-      <p class="text-xs text-muted mt-1">Hệ thống ôn thi tự động</p>
-    </div>
-    <nav class="flex-1 p-4 space-y-2">
-      <button onclick="setTab('mcq')" id="nav-mcq" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted hover:bg-slate-800 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        Thi Trắc Nghiệm
-      </button>
-      <button onclick="setTab('oral')" id="nav-oral" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted hover:bg-slate-100 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-        Luyện Vấn Đáp
-      </button>
-    </nav>
-    <div class="p-4 border-t border-border">
-      <div class="bg-white border border-border rounded-lg p-3">
-        <div class="text-xs text-muted mb-1">Trạng thái dữ liệu</div>
-        <div id="db-status" class="text-sm font-semibold text-text">Chưa có dữ liệu</div>
-      </div>
-    </div>
-  </aside>
+  <aside class="hidden"></aside>
 
   <!-- Main Content -->
-  <main class="flex-1 overflow-auto bg-bg p-8">
+  <main class="flex-1 overflow-auto bg-bg p-4 md:p-8">
+    <header class="mb-4">
+      <h1 class="text-center text-lg md:text-2xl font-bold text-text">ÔN THI TVV SỨC KHỎE NUTRILITE 2025</h1>
+    </header>
     
     <!-- MCQ Quiz Section -->
     <div id="view-mcq" class="hidden max-w-4xl mx-auto h-full flex flex-col">
@@ -74,16 +56,20 @@
               <input id="profile-phone" type="tel" placeholder="Số điện thoại" class="block w-full text-sm bg-white rounded-lg border border-border text-text px-3 py-2">
             </div>
           </div>
-          <button id="btn-save-profile" class="py-2 px-4 bg-slate-200 hover:bg-slate-300 text-text rounded-lg text-sm">Lưu thông tin</button>
+          <button id="btn-save-profile" class="w-full md:w-auto py-2 px-4 bg-slate-200 hover:bg-slate-300 text-text rounded-lg text-sm">Lưu thông tin</button>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mt-6">
+        <div id="flow-mode" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <button id="btn-flow-mcq" class="py-6 px-4 bg-accent hover:bg-blue-600 text-white rounded-xl text-base font-semibold">Luyện thi trắc nghiệm</button>
+          <button id="btn-flow-oral" class="py-6 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-base font-semibold">Luyện thi vấn đáp</button>
+        </div>
+        <div id="mode-section" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 items-end mt-6">
           <div class="md:col-span-2">
             <label class="block text-xs font-medium text-muted mb-1">Lựa chọn chế độ</label>
             <div class="text-xs text-muted">Chọn một chế độ thi phù hợp</div>
           </div>
-          <div class="flex gap-2">
-            <button id="btn-mode-by-chapter" class="py-2 px-4 bg-accent hover:bg-blue-600 text-white rounded-lg text-sm">Ôn tập theo từng chủ đề</button>
-            <button id="btn-mode-demo60" class="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm">THI DEMO (60 câu)</button>
+          <div class="flex gap-2 flex-col md:flex-row">
+            <button id="btn-mode-by-chapter" class="w-full md:w-auto py-2 px-4 bg-accent hover:bg-blue-600 text-white rounded-lg text-sm">Ôn tập theo từng chủ đề</button>
+            <button id="btn-mode-demo60" class="w-full md:w-auto py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm">THI DEMO (60 câu)</button>
           </div>
         </div>
         <div id="chapter-picker" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mt-6 hidden">
@@ -93,8 +79,9 @@
               <option value="">-- Chưa có dữ liệu --</option>
             </select>
           </div>
-          <button id="btn-start-chapter" class="py-2 px-4 bg-accent hover:bg-blue-600 text-white rounded-lg text-sm">Bắt đầu</button>
+          <button id="btn-start-chapter" class="w-full md:w-auto py-2 px-4 bg-accent hover:bg-blue-600 text-white rounded-lg text-sm">Bắt đầu</button>
         </div>
+        <div id="chapter-grid" class="hidden mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
         <div id="demo-progress" class="mt-4 hidden">
           <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
             <div id="demo-progress-bar" class="h-2 bg-accent" style="width:0%"></div>
@@ -114,12 +101,12 @@
 
       <div id="quiz-container" class="hidden flex-col h-full">
         <!-- Progress Header -->
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
           <div>
             <span class="text-sm font-medium text-muted">Câu hỏi</span>
             <span id="q-progress" class="text-xl font-bold text-text ml-2">1/10</span>
           </div>
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4 flex-wrap">
              <div class="text-right">
                <span class="text-sm font-medium text-muted">Điểm số</span>
                <span id="q-score" class="text-xl font-bold text-success ml-2">0</span>
@@ -180,6 +167,9 @@
       </div>
     </div>
 
+    <footer class="mt-8 text-center text-xs text-muted">
+      NTKIEN@2026
+    </footer>
   </main>
 
   <script>
@@ -188,6 +178,7 @@
     const CONFIG_KEY = 'nutrilite_config_v1';
     const PROFILE_KEY = 'nutrilite_profile_v1';
     const SCORES_KEY = 'nutrilite_scores_v1';
+    const PRACTICED_KEY = 'nutrilite_practiced_v1';
     const DEFAULT_GSHEET_URL = 'https://script.google.com/macros/s/AKfycbwu92RcTVckfgo6v78MoAH1H_zTtl3XxtsdQOxIzv0k2bz0iSyaM6A9ckYxz3yvpxA73A/exec';
     let db = {
       questions: [],
@@ -305,6 +296,11 @@
       const btn = el('btn-save-profile');
       if(row) row.classList.toggle('hidden', has);
       if(btn) btn.classList.toggle('hidden', has);
+      el('flow-mode').classList.toggle('hidden', !has);
+      const ms = el('mode-section'), cg = el('chapter-grid'), dp = el('demo-progress');
+      if(ms) ms.classList.add('hidden');
+      if(cg) cg.classList.add('hidden');
+      if(dp) dp.classList.add('hidden');
     }
 
     const jsonpFetch = (url) => {
@@ -353,6 +349,7 @@
           const sel = el('chapter-select');
           sel.innerHTML = filtered.map(n => `<option value="${n}">${n}</option>`).join('');
           el('gsheet-status').textContent = `Đã tải ${filtered.length} chủ đề`;
+          await renderChapterGrid(filtered);
         } else {
           el('gsheet-status').textContent = 'Không tìm thấy chủ đề nào';
         }
@@ -360,6 +357,55 @@
         el('gsheet-status').textContent = 'Lỗi khi tải danh sách chủ đề';
       }
     }
+    const renderChapterGrid = async (names) => {
+      const url = (config.gsheetUrl || DEFAULT_GSHEET_URL).trim();
+      const practicedRaw = localStorage.getItem(PRACTICED_KEY);
+      let practiced = new Set();
+      if(practicedRaw) { try { practiced = new Set(JSON.parse(practicedRaw)); } catch(e){} }
+      const grid = el('chapter-grid');
+      grid.classList.remove('hidden');
+      el('chapter-picker').classList.add('hidden');
+      grid.innerHTML = '';
+      let done = 0;
+      const counts = {};
+      await Promise.all(names.map(async (n) => {
+        try {
+          const dj = await fetchJSON(url + '?sheet=' + encodeURIComponent(n) + '&debug=1&ts=' + Date.now());
+          counts[n] = dj && dj.count ? dj.count : 0;
+        } catch(_) { counts[n] = 0; }
+        done++;
+      }));
+      grid.innerHTML = names.map(n => {
+        const count = counts[n] || 0;
+        const isDone = practiced.has(n);
+        const cls = isDone ? 'border-green-500 bg-green-50' : 'border-border bg-white';
+        const badge = isDone ? '<span class="text-xs text-green-600">Đã luyện tập</span>' : '';
+        return `
+          <button data-name="${n}" class="text-left p-4 rounded-xl border ${cls} hover:bg-slate-50 transition-colors">
+            <div class="text-sm text-muted mb-1">${n}</div>
+            <div class="text-lg font-semibold text-text">${count} câu</div>
+            ${badge}
+          </button>
+        `;
+      }).join('');
+      [...grid.querySelectorAll('button[data-name]')].forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const name = btn.getAttribute('data-name');
+          config.chapter = name; saveConfig();
+          el('gsheet-status').textContent = `Đang tải câu hỏi: ${name}...`;
+          try {
+            const data = await fetchJSON(url + '?sheet=' + encodeURIComponent(name) + '&ts=' + Date.now());
+            if(Array.isArray(data)) {
+              const valid = data.filter(item => item.q && Array.isArray(item.opts) && typeof item.correct === 'number');
+              db.questions = valid;
+              db.corpus = '';
+              saveDB();
+              setTab('mcq');
+            }
+          } catch(e) { el('gsheet-status').textContent = 'Lỗi khi tải câu hỏi'; }
+        });
+      });
+    };
     const loadChapterQuestions = async () => {
       const url = (config.gsheetUrl || DEFAULT_GSHEET_URL).trim();
       const name = el('chapter-select').value;
@@ -441,14 +487,8 @@
     const setTab = (id) => {
       ['mcq', 'oral'].forEach(t => {
         el(`view-${t}`).classList.add('hidden');
-        const btn = el(`nav-${t}`);
         if (t === id) {
-          btn.classList.remove('text-muted', 'hover:bg-slate-800');
-          btn.classList.add('bg-accent/10', 'text-accent');
           el(`view-${t}`).classList.remove('hidden');
-        } else {
-          btn.classList.add('text-muted', 'hover:bg-slate-800');
-          btn.classList.remove('bg-accent/10', 'text-accent');
         }
       });
     }
@@ -726,25 +766,100 @@
     }
 
     // --- Oral Logic ---
-    el('btn-oral-next').addEventListener('click', () => {
-      if(!db.orals || db.orals.length === 0) {
-        loadOrals();
-        return;
-      }
-      const item = db.orals[Math.floor(Math.random() * db.orals.length)];
-
-      el('oral-placeholder').classList.add('hidden');
-      el('oral-content').classList.remove('hidden');
-      el('oral-text').textContent = item.q;
-    });
+    const renderOralGrid = async () => {
+      if(!db.orals || db.orals.length === 0) await loadOrals();
+      const cont = document.createElement('div');
+      cont.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4';
+      const oralHistRaw = localStorage.getItem('nutrilite_oral_done_v1');
+      let doneSet = new Set();
+      if(oralHistRaw) { try { doneSet = new Set(JSON.parse(oralHistRaw)); } catch(e){} }
+      cont.innerHTML = db.orals.map((it, idx) => {
+        const isDone = doneSet.has(String(idx));
+        const cls = isDone ? 'border-green-500 bg-green-50' : 'border-border bg-white';
+        return `<button data-idx="${idx}" class="text-left p-4 rounded-xl border ${cls} hover:bg-slate-50 transition-colors">
+          <div class="text-sm text-muted mb-1">${it.topic || 'Chủ đề'}</div>
+          <div class="text-base font-semibold text-text line-clamp-2">${it.q}</div>
+        </button>`;
+      }).join('');
+      const card = document.getElementById('oral-card');
+      card.innerHTML = '';
+      card.appendChild(cont);
+      [...cont.querySelectorAll('button[data-idx]')].forEach(btn => {
+        btn.addEventListener('click', () => showOral(parseInt(btn.getAttribute('data-idx'))));
+      });
+      const actions = document.createElement('div');
+      actions.className = 'flex gap-2 mt-4';
+      const rnd = document.createElement('button');
+      rnd.className = 'px-4 py-2 bg-accent hover:bg-blue-600 text-white rounded-lg';
+      rnd.textContent = 'Bốc thăm ngẫu nhiên';
+      rnd.onclick = () => showOral(Math.floor(Math.random()*db.orals.length));
+      actions.appendChild(rnd);
+      card.appendChild(actions);
+    };
+    const showOral = (idx) => {
+      const it = db.orals[idx];
+      const card = document.getElementById('oral-card');
+      card.innerHTML = `
+        <div class="w-full max-w-2xl">
+          <div class="text-xl md:text-2xl font-semibold text-text leading-relaxed mb-6">${it.q}</div>
+          <textarea id="oral-answer" maxlength="200" class="w-full h-28 border border-border rounded-lg p-3 text-sm" placeholder="Nhập câu trả lời (tối đa 200 chữ)"></textarea>
+          <div class="flex gap-2 mt-3">
+            <button id="btn-submit-oral" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">Trả lời</button>
+            <button id="btn-back-oral" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-text rounded-lg">Quay lại danh sách</button>
+          </div>
+          <div id="oral-ref" class="mt-4 hidden">
+            <div class="text-sm text-muted mb-1">Gợi ý/Đáp án tham khảo</div>
+            <div class="p-3 border border-border rounded-lg bg-slate-50 text-sm">${it.hint || ''}</div>
+            <div id="oral-compare" class="mt-2 text-sm"></div>
+          </div>
+        </div>
+      `;
+      document.getElementById('btn-submit-oral').onclick = () => {
+        const ans = document.getElementById('oral-answer').value.trim();
+        const ref = it.hint || '';
+        const sim = compareText(ans, ref);
+        const cmp = document.getElementById('oral-compare');
+        document.getElementById('oral-ref').classList.remove('hidden');
+        cmp.textContent = `Mức độ tương đồng: ${Math.round(sim*100)}%`;
+        try {
+          const raw = localStorage.getItem('nutrilite_oral_done_v1');
+          let arr = raw ? JSON.parse(raw) : [];
+          if(!arr.includes(String(idx))) { arr.push(String(idx)); localStorage.setItem('nutrilite_oral_done_v1', JSON.stringify(arr)); }
+        } catch(_) {}
+      };
+      document.getElementById('btn-back-oral').onclick = renderOralGrid;
+    };
+    const compareText = (a,b) => {
+      const ta = a.toLowerCase().split(/\s+/).filter(x=>x), tb = b.toLowerCase().split(/\s+/).filter(x=>x);
+      if(ta.length===0||tb.length===0) return 0;
+      const setA = new Set(ta); let inter=0; for(const t of tb) if(setA.has(t)) inter++;
+      return inter/Math.max(ta.length,tb.length);
+    };
+    el('btn-oral-next').addEventListener('click', renderOralGrid);
 
     // --- Event Listeners ---
+    el('btn-flow-mcq').addEventListener('click', () => {
+      setTab('mcq');
+      el('mode-section').classList.remove('hidden');
+      el('chapter-grid').classList.add('hidden');
+      el('demo-progress').classList.add('hidden');
+      el('gsheet-status').textContent = '';
+    });
+    el('btn-flow-oral').addEventListener('click', () => {
+      setTab('oral');
+      el('mode-section').classList.add('hidden');
+      el('chapter-grid').classList.add('hidden');
+      el('demo-progress').classList.add('hidden');
+    });
     el('btn-mode-by-chapter').addEventListener('click', () => {
-      document.getElementById('chapter-picker').classList.remove('hidden');
+      el('mode-section').classList.add('hidden');
       loadChapters();
     });
     el('btn-start-chapter').addEventListener('click', loadChapterQuestions);
-    el('btn-mode-demo60').addEventListener('click', loadAll60);
+    el('btn-mode-demo60').addEventListener('click', () => {
+      el('mode-section').classList.add('hidden');
+      loadAll60();
+    });
     el('btn-demo-start').addEventListener('click', () => {
       el('demo-progress').classList.add('hidden');
       startDemoTimer(45);
@@ -780,6 +895,15 @@
       } catch(e) {
         el('gsheet-status').textContent = 'Lỗi khi ghi điểm';
       }
+      try {
+        const practicedRaw = localStorage.getItem(PRACTICED_KEY);
+        let practiced = [];
+        if(practicedRaw) { try { practiced = JSON.parse(practicedRaw); } catch(e){} }
+        if (config.chapter) {
+          if (!practiced.includes(config.chapter)) practiced.push(config.chapter);
+          localStorage.setItem(PRACTICED_KEY, JSON.stringify(practiced));
+        }
+      } catch(_) {}
     };
     const loadOrals = async () => {
       const url = (config.gsheetUrl || DEFAULT_GSHEET_URL).trim();
