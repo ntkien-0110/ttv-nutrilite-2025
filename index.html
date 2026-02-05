@@ -208,6 +208,7 @@
     // --- Utils ---
     const el = id => document.getElementById(id);
     const normalize = t => t.replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/\r/g,'');
+    const escapeHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const loadDB = async () => {
       const rawCfg = localStorage.getItem(CONFIG_KEY);
       if(rawCfg) {
@@ -850,9 +851,31 @@
       actions.appendChild(rnd);
       card.appendChild(actions);
     };
+    const formatHintHtml = (text) => {
+      const lines = String(text||'').split(/\r?\n/).map(s=>s.trim());
+      let out = '';
+      let i = 0;
+      while (i < lines.length) {
+        if (lines[i] === '') { out += '<div class="h-2"></div>'; i++; continue; }
+        if (/^- /.test(lines[i])) {
+          const items = [];
+          while (i < lines.length && /^- /.test(lines[i])) { items.push(lines[i].replace(/^- +/,'')); i++; }
+          out += `<ul class="list-disc pl-5">${items.map(t=>`<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+          continue;
+        }
+        if (/^\d+[\.\)]\s+/.test(lines[i])) {
+          out += `<div class="font-semibold">${escapeHtml(lines[i])}</div>`;
+          i++; continue;
+        }
+        out += `<div>${escapeHtml(lines[i])}</div>`;
+        i++;
+      }
+      return out;
+    };
     const showOral = (idx) => {
       const it = db.orals[idx];
       const card = document.getElementById('oral-card');
+      const hintHtml = formatHintHtml(it.hint || '');
       card.innerHTML = `
         <div class="w-full max-w-2xl">
           <div class="text-xl md:text-2xl font-semibold text-text leading-relaxed mb-6">${it.q}</div>
@@ -863,7 +886,7 @@
           </div>
           <div id="oral-ref" class="mt-4 hidden">
             <div class="text-sm text-muted mb-1">Gợi ý/Đáp án tham khảo</div>
-            <div class="p-3 border border-border rounded-lg bg-slate-50 text-sm">${it.hint || ''}</div>
+            <div class="p-3 border border-border rounded-lg bg-slate-50 text-sm">${hintHtml}</div>
             <div id="oral-compare" class="mt-2 text-sm"></div>
           </div>
         </div>
