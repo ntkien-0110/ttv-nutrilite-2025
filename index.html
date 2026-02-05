@@ -985,22 +985,31 @@
         totalQuestions: quizState.shuffled.length,
         at: new Date().toISOString()
       };
+      const qs = Object.entries(payload).map(([k,v])=> `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
+      const preferJsonp = location.protocol === 'file:' || (location.hostname && location.hostname.endsWith('github.io'));
       try {
-        const preferJsonp = location.protocol === 'file:' || (location.hostname && location.hostname.endsWith('github.io'));
-        if (preferJsonp) {
-          const qs = Object.entries(payload).map(([k,v])=> `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
-          const data = await jsonpFetch(url + '?' + qs);
-          if(data && data.ok) el('gsheet-status').textContent = 'Đã ghi điểm lên Google Sheet';
-          else el('gsheet-status').textContent = 'Không thể ghi điểm';
-        } else {
+        if (!preferJsonp) {
           const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
           if(!res.ok) throw new Error('fail');
           const data = await res.json();
+          if(data && data.ok) {
+            el('gsheet-status').textContent = 'Đã ghi điểm lên Google Sheet';
+          } else {
+            el('gsheet-status').textContent = 'Không thể ghi điểm';
+          }
+        } else {
+          const data = await jsonpFetch(url + '?' + qs);
           if(data && data.ok) el('gsheet-status').textContent = 'Đã ghi điểm lên Google Sheet';
           else el('gsheet-status').textContent = 'Không thể ghi điểm';
         }
       } catch(e) {
-        el('gsheet-status').textContent = 'Lỗi khi ghi điểm';
+        try {
+          const data = await jsonpFetch(url + '?' + qs);
+          if(data && data.ok) el('gsheet-status').textContent = 'Đã ghi điểm lên Google Sheet';
+          else el('gsheet-status').textContent = 'Không thể ghi điểm';
+        } catch(_) {
+          el('gsheet-status').textContent = 'Lỗi khi ghi điểm';
+        }
       }
       try {
         const practicedRaw = localStorage.getItem(PRACTICED_KEY);
