@@ -877,7 +877,7 @@
       const card = document.getElementById('oral-card');
       const hintHtml = formatHintHtml(it.hint || '');
       card.innerHTML = `
-        <div class="w-full max-w-2xl">
+        <div class="w-full max-w-2xl text-left">
           <div class="text-xl md:text-2xl font-semibold text-text leading-relaxed mb-6">${it.q}</div>
           <textarea id="oral-answer" maxlength="200" class="w-full h-28 border border-border rounded-lg p-3 text-sm" placeholder="Nhập câu trả lời (tối đa 200 chữ)"></textarea>
           <div class="flex gap-2 mt-3">
@@ -886,7 +886,7 @@
           </div>
           <div id="oral-ref" class="mt-4 hidden">
             <div class="text-sm text-muted mb-1">Gợi ý/Đáp án tham khảo</div>
-            <div class="p-3 border border-border rounded-lg bg-slate-50 text-sm">${hintHtml}</div>
+            <div class="p-3 border border-border rounded-lg bg-slate-50 text-sm text-left">${hintHtml}</div>
             <div id="oral-compare" class="mt-2 text-sm"></div>
           </div>
         </div>
