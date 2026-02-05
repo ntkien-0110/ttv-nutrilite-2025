@@ -431,7 +431,7 @@
         const data = await fetchJSON(u);
         console.log('dropdown raw length', Array.isArray(data)?data.length:0);
         if(Array.isArray(data)) {
-          const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number' || (Array.isArray(item.corrects) && item.corrects.length>0)));
+          const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number'));
           if(valid.length > 0) {
             console.log('dropdown valid length', valid.length);
             db.questions = valid;
@@ -478,7 +478,7 @@
       try {
         const data = await fetchJSON(url + '?demo60=1&ts=' + Date.now());
         if(!Array.isArray(data) || data.length === 0) { el('demo-progress-text').textContent = 'Không có dữ liệu'; return; }
-        const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number' || (Array.isArray(item.corrects) && item.corrects.length>0)));
+           const valid = data.filter(item => item.q && Array.isArray(item.opts) && (typeof item.correct === 'number'));
         const shuffled = [...valid].sort(()=>Math.random()-0.5);
         const picked = shuffled.slice(0, 60).map(x => {
           if (typeof x.correct === 'number') return { q: x.q, opts: x.opts, correct: x.correct };
@@ -986,11 +986,19 @@
         at: new Date().toISOString()
       };
       try {
-        const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-        if(!res.ok) throw new Error('fail');
-        const data = await res.json();
-        if(data && data.ok) el('gsheet-status').textContent = 'Đã ghi điểm lên Google Sheet';
-        else el('gsheet-status').textContent = 'Không thể ghi điểm';
+        const preferJsonp = location.protocol === 'file:' || (location.hostname && location.hostname.endsWith('github.io'));
+        if (preferJsonp) {
+          const qs = Object.entries(payload).map(([k,v])=> `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
+          const data = await jsonpFetch(url + '?' + qs);
+          if(data && data.ok) el('gsheet-status').textContent = 'Đã ghi điểm lên Google Sheet';
+          else el('gsheet-status').textContent = 'Không thể ghi điểm';
+        } else {
+          const res = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+          if(!res.ok) throw new Error('fail');
+          const data = await res.json();
+          if(data && data.ok) el('gsheet-status').textContent = 'Đã ghi điểm lên Google Sheet';
+          else el('gsheet-status').textContent = 'Không thể ghi điểm';
+        }
       } catch(e) {
         el('gsheet-status').textContent = 'Lỗi khi ghi điểm';
       }
