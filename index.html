@@ -35,7 +35,7 @@
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col overflow-hidden">
+<body class="min-h-screen flex flex-col overflow-y-auto">
 
   <!-- Sidebar -->
   <aside class="hidden"></aside>
@@ -288,17 +288,10 @@
       const s = el('db-status');
       if (s) s.textContent = count > 0 ? `${count} câu hỏi` : 'Chưa có dữ liệu';
 
-      // Update Quiz View
-      if (count > 0) {
-        el('quiz-empty').classList.add('hidden');
-        el('quiz-container').classList.remove('hidden');
-        el('quiz-container').classList.add('flex');
-        if (quizState.shuffled.length === 0) initQuiz();
-      } else {
-        el('quiz-empty').classList.remove('hidden');
-        el('quiz-container').classList.add('hidden');
-        el('quiz-container').classList.remove('flex');
-      }
+      // Không tự động hiển thị quiz-container tại đây; sẽ hiển thị khi người dùng bấm "Bắt đầu"
+      // Đảm bảo quiz-container không bật tự động gây hiển thị ở dưới
+      el('quiz-container').classList.add('hidden');
+      el('quiz-container').classList.remove('flex');
     }
     const applyProfileVisibility = () => {
       const has = !!(profile.phone && profile.phone.trim());
@@ -446,10 +439,14 @@
             saveDB();
             el('gsheet-status').textContent = `Đã nạp ${valid.length} câu hỏi cho ${name}. Bấm "Bắt đầu bài" để làm theo thứ tự.`;
             el('chapter-picker').classList.add('hidden');
+            el('mode-section').classList.add('hidden');
+            el('chapter-grid').classList.add('hidden');
+            el('demo-progress').classList.add('hidden');
+            setTab('mcq');
             el('quiz-empty').classList.add('hidden');
             el('quiz-container').classList.remove('hidden');
             el('quiz-container').classList.add('flex');
-            setTab('mcq');
+            window.scrollTo({top:0, behavior:'smooth'});
             initQuiz(false);
           } else {
             // Fallback debug to show counts
@@ -662,8 +659,8 @@
     }
 
     // --- Quiz Logic ---
-    const initQuiz = () => {
-      quizState.shuffled = [...db.questions].sort(() => 0.5 - Math.random());
+    const initQuiz = (shuffle=true) => {
+      quizState.shuffled = shuffle ? [...db.questions].sort(() => 0.5 - Math.random()) : [...db.questions];
       quizState.index = 0;
       quizState.score = 0;
       quizState.history = [];
@@ -948,6 +945,9 @@
       el('quiz-empty').classList.add('hidden');
       el('quiz-container').classList.remove('hidden');
       el('quiz-container').classList.add('flex');
+      el('mode-section').classList.add('hidden');
+      el('chapter-grid').classList.add('hidden');
+      window.scrollTo({top:0, behavior:'smooth'});
       startDemoTimer(45);
       initQuiz(true);
     });
@@ -960,6 +960,7 @@
         el('quiz-empty').classList.remove('hidden');
         el('chapter-grid').classList.remove('hidden');
         el('gsheet-status').textContent = '';
+        window.scrollTo({top:0, behavior:'smooth'});
       } else {
         showHome();
       }
